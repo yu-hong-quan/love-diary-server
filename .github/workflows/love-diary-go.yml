@@ -2,10 +2,7 @@ name: Build and Push love-diary-go
 
 on:
   push:
-    branches: [master]
-    paths:
-      - "love-diary-go/**"
-      - ".github/workflows/love-diary-go.yml"
+    branches: [master, main]
   workflow_dispatch:
 
 concurrency:
