@@ -9,6 +9,11 @@ concurrency:
   group: love-diary-go-docker
   cancel-in-progress: true
 
+# 👇 必须加这一段
+permissions:
+  contents: read
+  packages: write   # 允许推到 GHCR
+
 env:
   IMAGE_NAME: ghcr.io/${{ github.repository_owner }}/love-diary-go
 
