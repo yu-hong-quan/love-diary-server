@@ -1,0 +1,11 @@
+.env
+.env.*
+!.env.example
+*.exe
+bin/
+dist/
+.git
+.gitignore
+README.md
+docker-compose*.yml
+.github

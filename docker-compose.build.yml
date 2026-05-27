@@ -1,0 +1,18 @@
+# 本地构建调试（CI 仍走 GitHub Actions 推送到 GHCR）
+services:
+  love-diary-go:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: love-diary-go:local
+    container_name: love-diary-go-local
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    env_file:
+      - .env
+    environment:
+      PORT: "3000"
+      GIN_MODE: release
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
