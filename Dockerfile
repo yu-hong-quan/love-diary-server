@@ -15,6 +15,8 @@ RUN CGO_ENABLED=0 GOOS=linux go build -ldflags="-s -w" -o /love-diary-go .
 
 FROM alpine:3.20
 
+LABEL org.opencontainers.image.source="https://github.com/yu-hong-quan/love-diary-go"
+
 RUN apk add --no-cache ca-certificates tzdata wget \
     && adduser -D -H -u 10001 appuser
 
