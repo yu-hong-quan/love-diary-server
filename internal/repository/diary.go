@@ -208,6 +208,34 @@ func (r *DiaryRepo) IncrementLikes(ctx context.Context, id int) (*models.Diary, 
 	return r.UpdateFields(ctx, id, map[string]interface{}{"likes": existing.Likes + 1})
 }
 
+// IncrementComments 评论数 +1。
+func (r *DiaryRepo) IncrementComments(ctx context.Context, id int) error {
+	existing, err := r.GetByID(ctx, id)
+	if err != nil || existing == nil {
+		return err
+	}
+	_, err = r.pool.Exec(ctx,
+		`UPDATE `+r.table+` SET comments=$2, updated_at=$3 WHERE id=$1`,
+		id, existing.Comments+1, time.Now().UTC())
+	return err
+}
+
+// DecrementComments 评论数 -1（不低于 0）。
+func (r *DiaryRepo) DecrementComments(ctx context.Context, id int) error {
+	existing, err := r.GetByID(ctx, id)
+	if err != nil || existing == nil {
+		return err
+	}
+	n := existing.Comments - 1
+	if n < 0 {
+		n = 0
+	}
+	_, err = r.pool.Exec(ctx,
+		`UPDATE `+r.table+` SET comments=$2, updated_at=$3 WHERE id=$1`,
+		id, n, time.Now().UTC())
+	return err
+}
+
 // Delete 删除记录及对应图片目录，返回是否删到行。
 func (r *DiaryRepo) Delete(ctx context.Context, id int) (bool, error) {
 	tag, err := r.pool.Exec(ctx, "DELETE FROM "+r.table+" WHERE id=$1", id)

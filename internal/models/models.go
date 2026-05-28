@@ -72,6 +72,22 @@ type User struct {
 	Avatar   string `json:"avatar,omitempty"`
 }
 
+// Comment 日记评论（含评论人展示信息）。
+type Comment struct {
+	ID        int       `json:"id"`
+	DiaryID   int       `json:"diaryId"`
+	Content   string    `json:"content"`
+	Username  string    `json:"username"`
+	Name      string    `json:"name"` // 展示名称，与 username 一致
+	Avatar    string    `json:"avatar,omitempty"`
+	CreatedAt time.Time `json:"createdAt"`
+}
+
+// CommentInput 发表评论请求体。
+type CommentInput struct {
+	Content string `json:"content"`
+}
+
 // DiaryInput 创建/更新日记时的请求体。
 type DiaryInput struct {
 	Title    string   `json:"title"`

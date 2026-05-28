@@ -66,6 +66,7 @@ func (h *AuthHandler) Login(c *gin.Context) {
 		"message":    "登录成功",
 		"isLoggedIn": true,
 		"token":      tokenStr,
+		"username":   user.Username,
 		"expiresIn":  "7d", // 前端 login store 用于计算 localStorage 过期时间
 	})
 }

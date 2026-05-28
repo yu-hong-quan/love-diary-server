@@ -54,6 +54,10 @@ func main() {
 	authHandler := handlers.NewAuthHandler(userRepo, cfg)
 	travelHandler := handlers.NewTravelHandler(travelRepo)
 	dailyHandler := handlers.NewDailyHandler(dailyRepo)
+	travelCommentRepo := repository.NewTravelCommentRepo(pool, travelRepo)
+	dailyCommentRepo := repository.NewDailyCommentRepo(pool, dailyRepo)
+	travelCommentHandler := handlers.NewTravelCommentHandler(travelCommentRepo, travelRepo)
+	dailyCommentHandler := handlers.NewDailyCommentHandler(dailyCommentRepo, dailyRepo)
 	whisperHandler := handlers.NewWhisperHandler(whisperRepo)
 	specialDateHandler := handlers.NewSpecialDateHandler(specialDateRepo)
 	treeHandler := handlers.NewTreeHandler(treeRepo, cfg)
@@ -82,6 +86,8 @@ func main() {
 
 	registerDiaryRoutes(r, "/travel-diaries", travelHandler)
 	registerDiaryRoutes(r, "/daily-diaries", dailyHandler)
+	handlers.RegisterCommentRoutes(r, "/travel-diaries", travelCommentHandler, cfg)
+	handlers.RegisterCommentRoutes(r, "/daily-diaries", dailyCommentHandler, cfg)
 
 	r.GET("/whispers", whisperHandler.List)
 	r.GET("/whispers/:id", whisperHandler.GetOne)
