@@ -67,9 +67,25 @@ type Tree struct {
 // User 登录用户（password 不序列化到 JSON）。
 type User struct {
 	ID       int    `json:"id"`
-	Username string `json:"username"`
+	Account  string `json:"account"`
+	Nickname string `json:"nickname"`
+	Username string `json:"username,omitempty"` // 兼容旧字段，等于 account
 	Password string `json:"-"`
 	Avatar   string `json:"avatar,omitempty"`
+}
+
+// UserProfile 对外暴露的用户资料（不含密码）。
+type UserProfile struct {
+	ID       int    `json:"id"`
+	Account  string `json:"account"`
+	Nickname string `json:"nickname"`
+	Avatar   string `json:"avatar,omitempty"`
+}
+
+// UserProfileInput 更新用户资料请求体（仅昵称与头像）。
+type UserProfileInput struct {
+	Nickname string `json:"nickname"`
+	Avatar   string `json:"avatar"`
 }
 
 // Comment 日记评论（含评论人展示信息）。

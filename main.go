@@ -51,7 +51,7 @@ func main() {
 	userRepo := repository.NewUserRepo(pool)
 
 	// HTTP 处理层
-	authHandler := handlers.NewAuthHandler(userRepo, cfg)
+	authHandler := handlers.NewAuthHandler(userRepo, fileStore, cfg)
 	travelHandler := handlers.NewTravelHandler(travelRepo)
 	dailyHandler := handlers.NewDailyHandler(dailyRepo)
 	travelCommentRepo := repository.NewTravelCommentRepo(pool, travelRepo)
@@ -79,7 +79,7 @@ func main() {
 		c.JSON(http.StatusOK, gin.H{"status": "ok"})
 	})
 
-	r.POST("/auth/login", authHandler.Login)
+	handlers.RegisterAuthRoutes(r, authHandler, cfg)
 
 	r.POST("/upload/image", uploadHandler.UploadImage)
 	r.POST("/upload/images", uploadHandler.UploadImages)

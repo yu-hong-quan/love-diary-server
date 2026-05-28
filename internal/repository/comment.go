@@ -42,9 +42,11 @@ func NewDailyCommentRepo(pool *pgxpool.Pool, diaryRepo *DiaryRepo) *CommentRepo 
 // ListByDiaryID 查询某篇日记的全部评论（按时间正序）。
 func (r *CommentRepo) ListByDiaryID(ctx context.Context, diaryID int) ([]models.Comment, error) {
 	rows, err := r.pool.Query(ctx,
-		`SELECT c.id, c.diary_id, c.content, c.username, COALESCE(u.avatar,''), c.created_at
+		`SELECT c.id, c.diary_id, c.content, c.username,
+		        COALESCE(NULLIF(u.nickname, ''), u.account, c.username),
+		        COALESCE(u.avatar,''), c.created_at
 		 FROM `+r.table+` c
-		 LEFT JOIN users u ON u.username = c.username
+		 LEFT JOIN users u ON u.account = c.username
 		 WHERE c.diary_id = $1
 		 ORDER BY c.created_at ASC, c.id ASC`, diaryID)
 	if err != nil {
@@ -56,10 +58,12 @@ func (r *CommentRepo) ListByDiaryID(ctx context.Context, diaryID int) ([]models.
 	for rows.Next() {
 		var c models.Comment
 		var createdAt time.Time
-		if err := rows.Scan(&c.ID, &c.DiaryID, &c.Content, &c.Username, &c.Avatar, &createdAt); err != nil {
+		if err := rows.Scan(&c.ID, &c.DiaryID, &c.Content, &c.Username, &c.Name, &c.Avatar, &createdAt); err != nil {
 			return nil, err
 		}
-		c.Name = c.Username
+		if c.Name == "" {
+			c.Name = c.Username
+		}
 		c.CreatedAt = createdAt
 		list = append(list, c)
 	}
@@ -108,20 +112,24 @@ func (r *CommentRepo) Create(ctx context.Context, diaryID int, username, content
 // GetByID 按评论 id 查询。
 func (r *CommentRepo) GetByID(ctx context.Context, id int) (*models.Comment, error) {
 	row := r.pool.QueryRow(ctx,
-		`SELECT c.id, c.diary_id, c.content, c.username, COALESCE(u.avatar,''), c.created_at
+		`SELECT c.id, c.diary_id, c.content, c.username,
+		        COALESCE(NULLIF(u.nickname, ''), u.account, c.username),
+		        COALESCE(u.avatar,''), c.created_at
 		 FROM `+r.table+` c
-		 LEFT JOIN users u ON u.username = c.username
+		 LEFT JOIN users u ON u.account = c.username
 		 WHERE c.id = $1`, id)
 	var c models.Comment
 	var createdAt time.Time
-	err := row.Scan(&c.ID, &c.DiaryID, &c.Content, &c.Username, &c.Avatar, &createdAt)
+	err := row.Scan(&c.ID, &c.DiaryID, &c.Content, &c.Username, &c.Name, &c.Avatar, &createdAt)
 	if errors.Is(err, pgx.ErrNoRows) {
 		return nil, nil
 	}
 	if err != nil {
 		return nil, err
 	}
-	c.Name = c.Username
+	if c.Name == "" {
+		c.Name = c.Username
+	}
 	c.CreatedAt = createdAt
 	return &c, nil
 }
