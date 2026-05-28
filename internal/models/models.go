@@ -10,7 +10,7 @@ type PaginatedResult[T any] struct {
 	Total int `json:"total"`
 	Page  int `json:"page"`
 	Limit int `json:"limit"`
-}
+} 
 
 // Diary 旅行日记 / 日常日记（共用结构，存不同表）。
 type Diary struct {
