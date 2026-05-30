@@ -80,7 +80,7 @@ server {
     listen 80;
     server_name api.你的域名.com;
 
-    client_max_body_size 11m;  # 上传图片上限 10MB
+    client_max_body_size 20m;  # 上传/资料接口；头像已改 multipart，若仍用 base64 需留足余量
 
     location / {
         proxy_pass http://127.0.0.1:3000;

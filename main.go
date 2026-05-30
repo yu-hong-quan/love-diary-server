@@ -62,7 +62,7 @@ func main() {
 	whisperHandler := handlers.NewWhisperHandler(whisperRepo)
 	specialDateHandler := handlers.NewSpecialDateHandler(specialDateRepo)
 	treeHandler := handlers.NewTreeHandler(treeRepo, cfg)
-	uploadHandler := handlers.NewUploadHandler(fileStore)
+	uploadHandler := handlers.NewUploadHandler(fileStore, userRepo)
 	romanticToastHandler := handlers.NewRomanticToastHandler(romanticToastRepo)
 
 	r := gin.New()
@@ -87,6 +87,7 @@ func main() {
 
 	r.POST("/upload/image", uploadHandler.UploadImage)
 	r.POST("/upload/images", uploadHandler.UploadImages)
+	r.POST("/upload/avatar", middleware.Auth(cfg), uploadHandler.UploadAvatar)
 
 	registerDiaryRoutes(r, "/travel-diaries", travelHandler)
 	registerDiaryRoutes(r, "/daily-diaries", dailyHandler)

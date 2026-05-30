@@ -127,6 +127,10 @@ func (h *AuthHandler) UpdateProfile(c *gin.Context) {
 
 	var in models.UserProfileInput
 	if err := c.ShouldBindJSON(&in); err != nil {
+		if strings.Contains(err.Error(), "http: request body too large") {
+			c.JSON(http.StatusRequestEntityTooLarge, gin.H{"message": "请求体过大，请压缩头像后重试"})
+			return
+		}
 		c.JSON(http.StatusBadRequest, gin.H{"message": "Invalid request"})
 		return
 	}
@@ -142,6 +146,10 @@ func (h *AuthHandler) UpdateProfile(c *gin.Context) {
 		if h.store != nil {
 			saved, err := h.store.PersistAvatar(user.ID, in.Avatar)
 			if err != nil {
+				if strings.Contains(err.Error(), "exceeds") {
+					c.JSON(http.StatusRequestEntityTooLarge, gin.H{"message": "头像过大，请压缩后重试（最大 10MB）"})
+					return
+				}
 				c.JSON(http.StatusInternalServerError, gin.H{"message": "头像保存失败"})
 				return
 			}
@@ -162,9 +170,11 @@ func (h *AuthHandler) UpdateProfile(c *gin.Context) {
 // RegisterAuthRoutes 注册登录与资料路由。
 func RegisterAuthRoutes(r *gin.Engine, h *AuthHandler, cfg *config.Config) {
 	auth := middleware.Auth(cfg)
+	// base64 头像 JSON 约比原图大 33%，限制 12MB 请求体
+	profileBodyLimit := middleware.LimitBody(12 << 20)
 	r.POST("/auth/login", h.Login)
 	r.GET("/auth/profile", auth, h.GetProfile)
-	r.PUT("/auth/profile", auth, h.UpdateProfile)
+	r.PUT("/auth/profile", auth, profileBodyLimit, h.UpdateProfile)
 }
 
 func accountFromContext(c *gin.Context) string {

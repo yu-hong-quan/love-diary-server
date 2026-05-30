@@ -7,6 +7,7 @@ import (
 	"strings"
 	"time"
 
+	"love-diary-go/internal/repository"
 	"love-diary-go/internal/storage"
 
 	"github.com/gin-gonic/gin"
@@ -15,11 +16,12 @@ import (
 // UploadHandler 图片上传：落盘到 uploads/{category}/{diaryId}/ 并返回 /uploads/... 路径。
 type UploadHandler struct {
 	store *storage.Store
+	users *repository.UserRepo
 }
 
 // NewUploadHandler 创建上传处理器。
-func NewUploadHandler(store *storage.Store) *UploadHandler {
-	return &UploadHandler{store: store}
+func NewUploadHandler(store *storage.Store, users *repository.UserRepo) *UploadHandler {
+	return &UploadHandler{store: store, users: users}
 }
 
 func extFromMIME(mime string) string {
@@ -149,6 +151,67 @@ func (h *UploadHandler) UploadImages(c *gin.Context) {
 		"data": gin.H{
 			"images": uploaded,
 			"count":  len(uploaded),
+		},
+	})
+}
+
+// UploadAvatar POST /upload/avatar — multipart 上传头像（需登录），避免 base64 JSON 过大。
+func (h *UploadHandler) UploadAvatar(c *gin.Context) {
+	account, _ := c.Get("account")
+	accountStr, _ := account.(string)
+	if accountStr == "" {
+		c.JSON(http.StatusUnauthorized, gin.H{"message": "Unauthorized"})
+		return
+	}
+	if h.users == nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"message": "Server error"})
+		return
+	}
+
+	user, err := h.users.FindByAccountLegacy(c.Request.Context(), accountStr)
+	if err != nil || user == nil {
+		c.JSON(http.StatusNotFound, gin.H{"message": "User not found"})
+		return
+	}
+
+	file, err := c.FormFile("image")
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"message": "No file uploaded"})
+		return
+	}
+	if file.Size > storage.MaxAvatarBytes {
+		c.JSON(http.StatusRequestEntityTooLarge, gin.H{"message": "File too large"})
+		return
+	}
+
+	f, err := file.Open()
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"message": "Upload failed"})
+		return
+	}
+	defer f.Close()
+
+	buf := make([]byte, file.Size)
+	if _, err := f.Read(buf); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"message": "Upload failed"})
+		return
+	}
+
+	urlPath, err := h.store.SaveAvatarBytes(user.ID, buf, extFromMIME(file.Header.Get("Content-Type")))
+	if err != nil {
+		if strings.Contains(err.Error(), "exceeds") {
+			c.JSON(http.StatusRequestEntityTooLarge, gin.H{"message": "File too large"})
+			return
+		}
+		c.JSON(http.StatusInternalServerError, gin.H{"message": "Upload failed"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"success": true,
+		"data": gin.H{
+			"url":  urlPath,
+			"path": urlPath,
 		},
 	})
 }
