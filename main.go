@@ -49,7 +49,7 @@ func main() {
 	specialDateRepo := repository.NewSpecialDateRepo(pool)
 	treeRepo := repository.NewTreeRepo(pool)
 	userRepo := repository.NewUserRepo(pool)
-	romanticToastRepo := repository.NewRomanticToastRepo(pool)
+	gameRepo := repository.NewGameRepo(pool)
 
 	// HTTP 处理层
 	authHandler := handlers.NewAuthHandler(userRepo, fileStore, cfg)
@@ -63,7 +63,9 @@ func main() {
 	specialDateHandler := handlers.NewSpecialDateHandler(specialDateRepo)
 	treeHandler := handlers.NewTreeHandler(treeRepo, cfg)
 	uploadHandler := handlers.NewUploadHandler(fileStore, userRepo)
+	romanticToastRepo := repository.NewRomanticToastRepo(pool)
 	romanticToastHandler := handlers.NewRomanticToastHandler(romanticToastRepo)
+	gameHandler := handlers.NewGameHandler(gameRepo)
 
 	r := gin.New()
 	r.Use(gin.Logger(), gin.Recovery(), middleware.CORS())
@@ -106,6 +108,8 @@ func main() {
 	r.POST("/special-dates", specialDateHandler.Create)
 	r.PUT("/special-dates/:id", specialDateHandler.Update)
 	r.DELETE("/special-dates/:id", specialDateHandler.Delete)
+
+	handlers.RegisterGameRoutes(r, gameHandler)
 
 	r.GET("/tree", treeHandler.Get)
 	r.GET("/tree/logs", treeHandler.Logs)

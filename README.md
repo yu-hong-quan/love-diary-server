@@ -111,6 +111,7 @@ docker compose -f docker-compose.build.yml up -d --build
 - `../sql/users.sql`
 - 数据迁移脚本 `love-diary-migrate.sql`
 - `sql/romantic_toasts.sql`（首页浪漫 toast 文案池，可重复执行）
+- `sql/games.sql`（游戏模块：五子棋、骰子）
 
 ## 五、整体架构
 
@@ -130,6 +131,7 @@ docker compose -f docker-compose.build.yml up -d --build
 |------|------|
 | GET | `/health` |
 | GET | `/romantic-toasts/random` |
+| 游戏 | 见 [docs/GAMES_API.md](docs/GAMES_API.md) |
 | POST | `/auth/login` |
 | POST | `/upload/image`, `/upload/images` |
 | CRUD | `/travel-diaries`, `/daily-diaries`, `/whispers`, `/special-dates` |
