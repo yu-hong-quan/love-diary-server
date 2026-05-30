@@ -10,7 +10,7 @@ type PaginatedResult[T any] struct {
 	Total int `json:"total"`
 	Page  int `json:"page"`
 	Limit int `json:"limit"`
-}
+} 
 
 // Diary 旅行日记 / 日常日记（共用结构，存不同表）。
 type Diary struct {
@@ -23,6 +23,12 @@ type Diary struct {
 	Comments  int       `json:"comments"`
 	CreatedAt time.Time `json:"createdAt,omitempty"`
 	UpdatedAt time.Time `json:"updatedAt,omitempty"`
+}
+
+// RomanticToast 首页浪漫 toast 文案。
+type RomanticToast struct {
+	ID      int    `json:"id"`
+	Content string `json:"content"`
 }
 
 // Whisper 悄悄话。
@@ -67,9 +73,41 @@ type Tree struct {
 // User 登录用户（password 不序列化到 JSON）。
 type User struct {
 	ID       int    `json:"id"`
-	Username string `json:"username"`
+	Account  string `json:"account"`
+	Nickname string `json:"nickname"`
+	Username string `json:"username,omitempty"` // 兼容旧字段，等于 account
 	Password string `json:"-"`
 	Avatar   string `json:"avatar,omitempty"`
+}
+
+// UserProfile 对外暴露的用户资料（不含密码）。
+type UserProfile struct {
+	ID       int    `json:"id"`
+	Account  string `json:"account"`
+	Nickname string `json:"nickname"`
+	Avatar   string `json:"avatar,omitempty"`
+}
+
+// UserProfileInput 更新用户资料请求体（仅昵称与头像）。
+type UserProfileInput struct {
+	Nickname string `json:"nickname"`
+	Avatar   string `json:"avatar"`
+}
+
+// Comment 日记评论（含评论人展示信息）。
+type Comment struct {
+	ID        int       `json:"id"`
+	DiaryID   int       `json:"diaryId"`
+	Content   string    `json:"content"`
+	Username  string    `json:"username"`
+	Name      string    `json:"name"` // 展示名称，与 username 一致
+	Avatar    string    `json:"avatar,omitempty"`
+	CreatedAt time.Time `json:"createdAt"`
+}
+
+// CommentInput 发表评论请求体。
+type CommentInput struct {
+	Content string `json:"content"`
 }
 
 // DiaryInput 创建/更新日记时的请求体。

@@ -49,15 +49,23 @@ func main() {
 	specialDateRepo := repository.NewSpecialDateRepo(pool)
 	treeRepo := repository.NewTreeRepo(pool)
 	userRepo := repository.NewUserRepo(pool)
+	gameRepo := repository.NewGameRepo(pool)
 
 	// HTTP 处理层
-	authHandler := handlers.NewAuthHandler(userRepo, cfg)
+	authHandler := handlers.NewAuthHandler(userRepo, fileStore, cfg)
 	travelHandler := handlers.NewTravelHandler(travelRepo)
 	dailyHandler := handlers.NewDailyHandler(dailyRepo)
+	travelCommentRepo := repository.NewTravelCommentRepo(pool, travelRepo)
+	dailyCommentRepo := repository.NewDailyCommentRepo(pool, dailyRepo)
+	travelCommentHandler := handlers.NewTravelCommentHandler(travelCommentRepo, travelRepo)
+	dailyCommentHandler := handlers.NewDailyCommentHandler(dailyCommentRepo, dailyRepo)
 	whisperHandler := handlers.NewWhisperHandler(whisperRepo)
 	specialDateHandler := handlers.NewSpecialDateHandler(specialDateRepo)
 	treeHandler := handlers.NewTreeHandler(treeRepo, cfg)
-	uploadHandler := handlers.NewUploadHandler(fileStore)
+	uploadHandler := handlers.NewUploadHandler(fileStore, userRepo)
+	romanticToastRepo := repository.NewRomanticToastRepo(pool)
+	romanticToastHandler := handlers.NewRomanticToastHandler(romanticToastRepo)
+	gameHandler := handlers.NewGameHandler(gameRepo)
 
 	r := gin.New()
 	r.Use(gin.Logger(), gin.Recovery(), middleware.CORS())
@@ -67,6 +75,8 @@ func main() {
 	r.MaxMultipartMemory = 10 << 20
 
 	// Docker 健康检查：探测数据库连通性
+	r.GET("/romantic-toasts/random", romanticToastHandler.Random)
+
 	r.GET("/health", func(c *gin.Context) {
 		if err := pool.Ping(c.Request.Context()); err != nil {
 			c.JSON(http.StatusServiceUnavailable, gin.H{"status": "unhealthy", "db": err.Error()})
@@ -75,13 +85,16 @@ func main() {
 		c.JSON(http.StatusOK, gin.H{"status": "ok"})
 	})
 
-	r.POST("/auth/login", authHandler.Login)
+	handlers.RegisterAuthRoutes(r, authHandler, cfg)
 
 	r.POST("/upload/image", uploadHandler.UploadImage)
 	r.POST("/upload/images", uploadHandler.UploadImages)
+	r.POST("/upload/avatar", middleware.Auth(cfg), uploadHandler.UploadAvatar)
 
 	registerDiaryRoutes(r, "/travel-diaries", travelHandler)
 	registerDiaryRoutes(r, "/daily-diaries", dailyHandler)
+	handlers.RegisterCommentRoutes(r, "/travel-diaries", travelCommentHandler, cfg)
+	handlers.RegisterCommentRoutes(r, "/daily-diaries", dailyCommentHandler, cfg)
 
 	r.GET("/whispers", whisperHandler.List)
 	r.GET("/whispers/:id", whisperHandler.GetOne)
@@ -95,6 +108,8 @@ func main() {
 	r.POST("/special-dates", specialDateHandler.Create)
 	r.PUT("/special-dates/:id", specialDateHandler.Update)
 	r.DELETE("/special-dates/:id", specialDateHandler.Delete)
+
+	handlers.RegisterGameRoutes(r, gameHandler)
 
 	r.GET("/tree", treeHandler.Get)
 	r.GET("/tree/logs", treeHandler.Logs)

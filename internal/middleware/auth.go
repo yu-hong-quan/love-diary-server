@@ -43,7 +43,12 @@ func Auth(cfg *config.Config) gin.HandlerFunc {
 			return
 		}
 		username, _ := claims["username"].(string)
-		c.Set("username", username)
+		account, _ := claims["account"].(string)
+		if account == "" {
+			account = username
+		}
+		c.Set("account", account)
+		c.Set("username", account)
 		c.Next()
 	}
 }

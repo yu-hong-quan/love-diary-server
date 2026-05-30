@@ -9,8 +9,14 @@ concurrency:
   group: love-diary-go-docker
   cancel-in-progress: true
 
+# 👇 必须加这一段 允许推送
+permissions:
+  contents: read
+  packages: write   # 允许推到 GHCR
+
 env:
-  IMAGE_NAME: ghcr.io/${{ github.repository_owner }}/love-diary-go
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ghcr.io/${{ github.repository }}
 
 jobs:
   build-and-push:
@@ -23,12 +29,13 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      # GHCR_TOKEN（PAT，需 write:packages）优先；未配置时回退 GITHUB_TOKEN
       - name: Login to GHCR
         uses: docker/login-action@v3
         with:
-          registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.repository_owner }}
+          password: ${{ secrets.GHCR_TOKEN || secrets.GITHUB_TOKEN }}
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
@@ -42,23 +49,26 @@ jobs:
           tags: |
             ${{ env.IMAGE_NAME }}:latest
             ${{ env.IMAGE_NAME }}:${{ github.sha }}
+          labels: |
+            org.opencontainers.image.source=https://github.com/${{ github.repository }}
+            org.opencontainers.image.revision=${{ github.sha }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
       - name: Link package to repository
         continue-on-error: true
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ secrets.GHCR_TOKEN || secrets.GITHUB_TOKEN }}
         run: |
           gh api --method PUT \
-            "/user/packages/container/love-diary-go/repositories/${{ github.repository_id }}"
+            "/user/packages/container/${{ github.event.repository.name }}/repositories/${{ github.repository_id }}"
 
       - name: Set GHCR package visibility to public
         continue-on-error: true
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ secrets.GHCR_TOKEN || secrets.GITHUB_TOKEN }}
         run: |
           gh api --method PATCH \
-            "/user/packages/container/love-diary-go/visibility" \
+            "/user/packages/container/${{ github.event.repository.name }}/visibility" \
             -f visibility='public'
-          echo "Package love-diary-go is now public (or was already public)."
+          echo "Package ${{ github.event.repository.name }} is now public (or was already public)."
