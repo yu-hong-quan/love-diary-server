@@ -49,6 +49,7 @@ func main() {
 	specialDateRepo := repository.NewSpecialDateRepo(pool)
 	treeRepo := repository.NewTreeRepo(pool)
 	userRepo := repository.NewUserRepo(pool)
+	romanticToastRepo := repository.NewRomanticToastRepo(pool)
 
 	// HTTP 处理层
 	authHandler := handlers.NewAuthHandler(userRepo, fileStore, cfg)
@@ -62,6 +63,7 @@ func main() {
 	specialDateHandler := handlers.NewSpecialDateHandler(specialDateRepo)
 	treeHandler := handlers.NewTreeHandler(treeRepo, cfg)
 	uploadHandler := handlers.NewUploadHandler(fileStore)
+	romanticToastHandler := handlers.NewRomanticToastHandler(romanticToastRepo)
 
 	r := gin.New()
 	r.Use(gin.Logger(), gin.Recovery(), middleware.CORS())
@@ -71,6 +73,8 @@ func main() {
 	r.MaxMultipartMemory = 10 << 20
 
 	// Docker 健康检查：探测数据库连通性
+	r.GET("/romantic-toasts/random", romanticToastHandler.Random)
+
 	r.GET("/health", func(c *gin.Context) {
 		if err := pool.Ping(c.Request.Context()); err != nil {
 			c.JSON(http.StatusServiceUnavailable, gin.H{"status": "unhealthy", "db": err.Error()})

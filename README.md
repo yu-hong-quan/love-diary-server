@@ -110,6 +110,7 @@ docker compose -f docker-compose.build.yml up -d --build
 
 - `../sql/users.sql`
 - 数据迁移脚本 `love-diary-migrate.sql`
+- `sql/romantic_toasts.sql`（首页浪漫 toast 文案池，可重复执行）
 
 ## 五、整体架构
 
@@ -128,6 +129,7 @@ docker compose -f docker-compose.build.yml up -d --build
 | 方法 | 路径 |
 |------|------|
 | GET | `/health` |
+| GET | `/romantic-toasts/random` |
 | POST | `/auth/login` |
 | POST | `/upload/image`, `/upload/images` |
 | CRUD | `/travel-diaries`, `/daily-diaries`, `/whispers`, `/special-dates` |

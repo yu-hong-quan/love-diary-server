@@ -25,6 +25,12 @@ type Diary struct {
 	UpdatedAt time.Time `json:"updatedAt,omitempty"`
 }
 
+// RomanticToast 首页浪漫 toast 文案。
+type RomanticToast struct {
+	ID      int    `json:"id"`
+	Content string `json:"content"`
+}
+
 // Whisper 悄悄话。
 type Whisper struct {
 	ID        int       `json:"id"`
